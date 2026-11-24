@@ -5,7 +5,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RX Ads Earn</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -21,7 +20,7 @@ body {
     font-weight: bold;
     margin: 15px 0 25px;
 }
-.balance, .item, .history, .profile {
+.balance, .item, .history, .profile, .ad-box {
     background: #1d2c43;
     border-radius: 15px;
 }
@@ -53,33 +52,44 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
-button:active { opacity: .7; }
-
-.history, .profile {
+button:disabled {
+    opacity: .5;
+}
+.history, .profile, .ad-box {
     padding: 18px;
     margin-top: 25px;
 }
-.history-item {
+.history-item, .profile-row {
     border-bottom: 1px solid #35445a;
     padding: 12px 0;
     font-size: 14px;
-}
-.small {
-    color: #aab8ca;
-    font-size: 12px;
-}
-.profile-row {
-    padding: 13px 0;
-    border-bottom: 1px solid #35445a;
     overflow-wrap: anywhere;
 }
 .profile-row span {
     color: #20df91;
 }
-.hidden { display: none; }
+.small {
+    color: #aab8ca;
+    font-size: 12px;
+}
+.hidden {
+    display: none;
+}
 .back {
     margin-bottom: 15px;
     background: #35445a;
+}
+.ad-preview {
+    background: #101827;
+    padding: 25px 10px;
+    text-align: center;
+    border-radius: 12px;
+    margin: 15px 0;
+}
+#timer {
+    color: #20df91;
+    font-size: 28px;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -89,7 +99,6 @@ button:active { opacity: .7; }
 <div class="header">🚀 RX ADS EARN</div>
 
 <div id="home">
-
     <div class="balance">
         <p>YOUR DEMO BALANCE</p>
         <h1 id="balance">0 Points</h1>
@@ -97,7 +106,6 @@ button:active { opacity: .7; }
     </div>
 
     <div class="grid">
-
         <div class="item">
             📺
             <p>Watch Ads</p>
@@ -127,20 +135,37 @@ button:active { opacity: .7; }
             <p>My Profile</p>
             <button onclick="openProfile()">Profile</button>
         </div>
-
     </div>
 
     <div class="history">
         <h3>📊 Recent History</h3>
         <div id="historyList"></div>
     </div>
+</div>
 
+<!-- DEMO ADS PAGE -->
+<div id="adsPage" class="hidden">
+    <button class="back" onclick="closeAds()">← Back</button>
+
+    <div class="ad-box">
+        <h2>📺 Demo Ads</h2>
+        <div class="ad-preview">
+            <h3>RX Demo Advertisement</h3>
+            <p>This is a demonstration preview.</p>
+            <p id="timer">15</p>
+            <p id="adStatus">Ready to start</p>
+        </div>
+        <button id="startAdButton" onclick="startDemoAd()">
+            Start Demo Ad
+        </button>
+        <p class="small">
+            Demo only. No real advertisement or points are provided.
+        </p>
+    </div>
 </div>
 
 <!-- PROFILE PAGE -->
-
 <div id="profilePage" class="hidden">
-
     <button class="back" onclick="closeProfile()">← Back</button>
 
     <div class="profile">
@@ -149,38 +174,36 @@ button:active { opacity: .7; }
         <div class="profile-row">
             Name: <span id="userName">Guest</span>
         </div>
-
         <div class="profile-row">
             Username: <span id="userUsername">Not available</span>
         </div>
-
         <div class="profile-row">
             Telegram ID: <span id="userId">Not available</span>
         </div>
-
         <div class="profile-row">
             Balance: <span id="profileBalance">0 Points</span>
         </div>
-
         <div class="profile-row">
             Account: <span id="accountType">Demo Profile</span>
         </div>
-
     </div>
-
 </div>
 
 <script>
+const tg = window.Telegram?.WebApp;
 
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
 
 let balance = Number(localStorage.getItem("rx_balance") || 0);
 
 let history = JSON.parse(
     localStorage.getItem("rx_history") || "[]"
 );
+
+let adInterval = null;
 
 function updateBalance() {
     document.getElementById("balance").innerText =
@@ -237,7 +260,6 @@ function dailyBonus() {
     balance += 10;
 
     localStorage.setItem("rx_bonus_date", today);
-
     saveHistory("+10 Demo Points - Daily Bonus");
 
     updateBalance();
@@ -246,7 +268,47 @@ function dailyBonus() {
 }
 
 function watchAds() {
-    alert("Real ad system is not connected yet. No points added.");
+    document.getElementById("home").classList.add("hidden");
+    document.getElementById("adsPage").classList.remove("hidden");
+
+    document.getElementById("timer").innerText = "15";
+    document.getElementById("adStatus").innerText =
+        "Ready to start";
+
+    document.getElementById("startAdButton").disabled = false;
+    document.getElementById("startAdButton").innerText =
+        "Start Demo Ad";
+}
+
+function startDemoAd() {
+    let seconds = 15;
+
+    const timer = document.getElementById("timer");
+    const status = document.getElementById("adStatus");
+    const button = document.getElementById("startAdButton");
+
+    button.disabled = true;
+    status.innerText = "Demo preview running...";
+
+    clearInterval(adInterval);
+
+    adInterval = setInterval(() => {
+        seconds--;
+        timer.innerText = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(adInterval);
+            status.innerText = "Demo Completed!";
+            button.innerText = "Completed";
+            saveHistory("Demo Ad Completed - No points added");
+        }
+    }, 1000);
+}
+
+function closeAds() {
+    clearInterval(adInterval);
+    document.getElementById("adsPage").classList.add("hidden");
+    document.getElementById("home").classList.remove("hidden");
 }
 
 function referral() {
@@ -265,11 +327,12 @@ function showHistory() {
 }
 
 function openProfile() {
-    const user = tg.initDataUnsafe?.user;
+    const user = tg?.initDataUnsafe?.user;
 
     if (user) {
         document.getElementById("userName").innerText =
-            [user.first_name, user.last_name].filter(Boolean).join(" ") || "Unknown";
+            [user.first_name, user.last_name]
+                .filter(Boolean).join(" ") || "Guest";
 
         document.getElementById("userUsername").innerText =
             user.username ? "@" + user.username : "Not available";
@@ -280,10 +343,13 @@ function openProfile() {
         document.getElementById("accountType").innerText =
             "Telegram User";
     } else {
-        document.getElementById("userName").innerText = "Guest User";
-        document.getElementById("userUsername").innerText = "Not available";
-        document.getElementById("userId").innerText = "Not available";
-        document.getElementById("accountType").innerText = "Demo Profile";
+        document.getElementById("userName").innerText = "Guest";
+        document.getElementById("userUsername").innerText =
+            "Not available";
+        document.getElementById("userId").innerText =
+            "Not available";
+        document.getElementById("accountType").innerText =
+            "Demo Profile";
     }
 
     document.getElementById("profilePage").classList.remove("hidden");
@@ -296,7 +362,6 @@ function closeProfile() {
 }
 
 updateBalance();
-
 </script>
 
 </body>
