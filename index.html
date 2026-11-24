@@ -1,14 +1,17 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RX Ads Earn</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     background: #101827;
     color: white;
     padding: 20px;
@@ -44,10 +47,29 @@ body {
 button {
     background: #16c784;
     border: none;
-    padding: 12px;
+    padding: 12px 18px;
     border-radius: 10px;
     color: white;
     font-weight: bold;
+    cursor: pointer;
+}
+button:active {
+    opacity: 0.7;
+}
+.history {
+    background: #1d2c43;
+    padding: 15px;
+    margin-top: 25px;
+    border-radius: 15px;
+}
+.history-item {
+    border-bottom: 1px solid #35445a;
+    padding: 10px 0;
+    font-size: 14px;
+}
+.small {
+    color: #aab8ca;
+    font-size: 12px;
 }
 </style>
 </head>
@@ -63,38 +85,138 @@ button {
 </div>
 
 <div class="grid">
+
     <div class="item">
         📺
         <p>Watch Ads</p>
-        <button onclick="alert('Ad system coming soon!')">
-            Watch
-        </button>
+        <button onclick="watchAds()">Watch</button>
     </div>
 
     <div class="item">
         👥
         <p>Referral</p>
-        <button onclick="alert('Coming Soon!')">
-            Invite
-        </button>
+        <button onclick="referral()">Invite</button>
     </div>
 
     <div class="item">
         🎁
         <p>Daily Bonus</p>
-        <button onclick="alert('Coming Soon!')">
-            Claim
-        </button>
+        <button onclick="dailyBonus()">Claim</button>
     </div>
 
     <div class="item">
         📊
         <p>History</p>
-        <button onclick="alert('Coming Soon!')">
-            View
-        </button>
+        <button onclick="showHistory()">View</button>
+    </div>
+
+</div>
+
+<div class="history">
+    <h3>📊 Recent History</h3>
+    <div id="historyList">
+        <p class="small">No transactions yet.</p>
     </div>
 </div>
+
+<script>
+
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+let balance = Number(localStorage.getItem("rx_balance") || 0);
+
+let history = JSON.parse(
+    localStorage.getItem("rx_history") || "[]"
+);
+
+function updateBalance() {
+    document.getElementById("balance").innerText =
+        balance + " Points";
+
+    localStorage.setItem("rx_balance", balance);
+    renderHistory();
+}
+
+function saveHistory(message) {
+    history.unshift({
+        message: message,
+        date: new Date().toLocaleString()
+    });
+
+    history = history.slice(0, 20);
+
+    localStorage.setItem(
+        "rx_history",
+        JSON.stringify(history)
+    );
+
+    renderHistory();
+}
+
+function renderHistory() {
+    const list = document.getElementById("historyList");
+
+    if (history.length === 0) {
+        list.innerHTML =
+            '<p class="small">No transactions yet.</p>';
+        return;
+    }
+
+    list.innerHTML = history.map(item => `
+        <div class="history-item">
+            ${item.message}
+            <div class="small">${item.date}</div>
+        </div>
+    `).join("");
+}
+
+function dailyBonus() {
+    const today = new Date().toLocaleDateString();
+
+    if (localStorage.getItem("rx_bonus_date") === today) {
+        alert("You already claimed today's bonus!");
+        return;
+    }
+
+    balance += 10;
+
+    localStorage.setItem("rx_bonus_date", today);
+
+    saveHistory("+10 Demo Points - Daily Bonus");
+
+    updateBalance();
+
+    alert("Congratulations! 10 Demo Points added.");
+}
+
+function watchAds() {
+    alert(
+        "Real ad system is not connected yet. No points were added."
+    );
+}
+
+function referral() {
+    alert("Referral feature coming soon!");
+}
+
+function showHistory() {
+    if (history.length === 0) {
+        alert("No history available yet.");
+        return;
+    }
+
+    alert(
+        history.map(item =>
+            item.message + "\n" + item.date
+        ).join("\n\n")
+    );
+}
+
+updateBalance();
+
+</script>
 
 </body>
 </html>
